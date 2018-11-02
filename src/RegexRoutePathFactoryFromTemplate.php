@@ -1,9 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Featherbits\HttpRequestRouting\RegexPathRouting;
+namespace Featherbits\HttpRequestRouting;
 
 use RuntimeException;
-use Featherbits\HttpRequestRouting\RoutePath;
 
 class RegexRoutePathFactoryFromTemplate
 {

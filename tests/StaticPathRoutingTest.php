@@ -2,13 +2,13 @@
 
 use PHPUnit\Framework\TestCase;
 
-use Featherbits\HttpRequestRouting\Contract\RouteRequestMethodHandler;
 use Featherbits\HttpRequestRouting\{
-    RequestMethod, RoutePath, RouteNavigationResult
+    RoutePath,
+    StaticRoute,
+    RequestMethod,
+    RouteRequestMethodHandler,
+    RequestMethodHandlerFactory
 };
-
-use Featherbits\HttpRequestRouting\StaticPathRouting\StaticRoute;
-use Featherbits\HttpRequestRouting\StaticPathRouting\Contract\StaticRouteRequestMethodHandlerFactory;
 
 final class StaticPathRoutingTest extends TestCase
 {
@@ -16,7 +16,7 @@ final class StaticPathRoutingTest extends TestCase
     {
         $method = RequestMethod::create(RequestMethod::GET);
         $path = RoutePath::create('/some/path');
-        $factory = new class implements StaticRouteRequestMethodHandlerFactory
+        $factory = new class implements RequestMethodHandlerFactory
         {
             public $handler;
 
@@ -34,16 +34,20 @@ final class StaticPathRoutingTest extends TestCase
             }
         };
 
-        $route = new StaticRoute($method, $path, $factory);
-        $result = $route->navigate($method, $path);
+        $route = new StaticRoute($path, $method, $factory);
+        $result = $route->navigate($path, $method);
 
         $this->assertTrue($result->isPathMatched(), 'Route path did not match');
+
+        $obtainedHandler = $result->getHandler();
+
+        $this->assertNotNull($obtainedHandler, 'Handler was not obtained');
         $this->assertNotNull($factory->handler, 'Handler factory was not called');
-        $this->assertNotNull($result->getHandler(), 'Handler was not obtained');
-        $this->assertSame($factory->handler, $result->getHandler(),
+        
+        $this->assertSame($factory->handler, $obtainedHandler,
             'Handler instance created by factory is different from handler instance returned by navigation result');
 
-        $result->getHandler()->execute();
+        $obtainedHandler->execute();
 
         $this->assertTrue($factory->handler->executed, 'Handler was not executed');
     }

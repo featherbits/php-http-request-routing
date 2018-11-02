@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Featherbits\HttpRequestRouting\Contract;
+namespace Featherbits\HttpRequestRouting;
 
 interface RouteRequestMethodHandler
 {

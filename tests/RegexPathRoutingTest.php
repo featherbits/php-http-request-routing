@@ -2,13 +2,13 @@
 
 use PHPUnit\Framework\TestCase;
 
-use Featherbits\HttpRequestRouting\Contract\RouteRequestMethodHandler;
 use Featherbits\HttpRequestRouting\{
-    RequestMethod, RoutePath, RouteNavigationResult
+    RoutePath,
+    RegexRoute,
+    RequestMethod,
+    RouteRequestMethodHandler,
+    RequestMethodHandlerFactory
 };
-
-use Featherbits\HttpRequestRouting\RegexPathRouting\RegexRoute;
-use Featherbits\HttpRequestRouting\RegexPathRouting\Contract\RegexRouteRequestMethodHandlerFactory;
 
 class RegexPathRoutingTest extends TestCase
 {
@@ -17,11 +17,11 @@ class RegexPathRoutingTest extends TestCase
         $method = RequestMethod::create(RequestMethod::GET);
         $regexPath = RoutePath::create('/^\/some\/path$/');
         $requestPath = RoutePath::create('/some/path');
-        $factory = new class implements RegexRouteRequestMethodHandlerFactory
+        $factory = new class implements RequestMethodHandlerFactory
         {
             public $handler;
 
-            function create(array $regexSearchMatches): RouteRequestMethodHandler
+            function create(): RouteRequestMethodHandler
             {
                 return $this->handler = new class implements RouteRequestMethodHandler
                 {
@@ -35,16 +35,20 @@ class RegexPathRoutingTest extends TestCase
             }
         };
 
-        $route = new RegexRoute($method, $regexPath, $factory);
-        $result = $route->navigate($method, $requestPath);
+        $route = new RegexRoute($regexPath, $method, $factory);
+        $result = $route->navigate($requestPath, $method);
 
         $this->assertTrue($result->isPathMatched(), 'Route path did not match');
+
+        $obtainedHandler = $result->getHandler();
+
+        $this->assertNotNull($obtainedHandler, 'Handler was not obtained');
         $this->assertNotNull($factory->handler, 'Handler factory was not called');
-        $this->assertNotNull($result->getHandler(), 'Handler was not obtained');
-        $this->assertSame($factory->handler, $result->getHandler(),
+        
+        $this->assertSame($factory->handler, $obtainedHandler,
             'Handler instance created by factory is different from handler instance returned by navigation result');
 
-        $result->getHandler()->execute();
+        $obtainedHandler->execute();
 
         $this->assertTrue($factory->handler->executed, 'Handler was not executed');
     } 

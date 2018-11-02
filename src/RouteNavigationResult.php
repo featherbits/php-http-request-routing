@@ -2,31 +2,32 @@
 
 namespace Featherbits\HttpRequestRouting;
 
-use Featherbits\HttpRequestRouting\Contract\RouteRequestMethodHandler;
-
-class RouteNavigationResult
+abstract class RouteNavigationResult
 {
+    /**
+     * @var bool
+     */
     private $pathMatched;
-    private $handler;
 
-    protected function __construct(bool $pathMatched, ?RouteRequestMethodHandler $handler)
+    /**
+     * @var RequestMethodHandlerFactory|null
+     */
+    private $handlerFactory;
+
+    protected function __construct(bool $pathMatched, ?RequestMethodHandlerFactory $handlerFactory)
     {
         $this->pathMatched = $pathMatched;
-        $this->handler = $handler;
+        $this->handlerFactory = $handlerFactory;
     }
 
-    final static function create(bool $pathMatched, ?RouteRequestMethodHandler $handler): self
-    {
-        return new self($pathMatched, $handler);
-    }
-
-    final function isPathMatched(): bool
+    function isPathMatched(): bool
     {
         return $this->pathMatched;
     }
 
-    final function getHandler(): ?RouteRequestMethodHandler 
+    function getHandler(): ?RouteRequestMethodHandler 
     {
-        return $this->handler;
+        return ($this->pathMatched and $this->handlerFactory !== null)
+            ? $this->handlerFactory->create() : null;
     }
 }
