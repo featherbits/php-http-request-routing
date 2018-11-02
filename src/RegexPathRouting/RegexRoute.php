@@ -12,6 +12,8 @@ use Featherbits\HttpRequestRouting\{
     RequestMethod, RoutePath, RouteNavigationResult
 };
 
+use Featherbits\HttpRequestRouting\RegexPathRouting\Contract\RegexRouteRequestMethodHandlerFactory;
+
 class RegexRoute implements Route
 {
     use PrivateRoutePath;
@@ -21,7 +23,7 @@ class RegexRoute implements Route
     function __construct(RequestMethod $method, RoutePath $path, RegexRouteRequestMethodHandlerFactory $handlerFactory)
     {
         $this->path = $path;
-        $this->setRequestMethodHandler($method, $handlerFactory);
+        $this->setRequestMethodHandlerFactory($method, $handlerFactory);
     }
 
     function setRequestMethodHandlerFactory(RequestMethod $method, RegexRouteRequestMethodHandlerFactory $handlerFactory): void
@@ -32,12 +34,12 @@ class RegexRoute implements Route
     function navigate(RequestMethod $method, RoutePath $path): RouteNavigationResult
     {
         $methodName = $method->getValue();
-        return RouteNavigationResult::create($path->pregMatch($path, $regexSearchMatches),
+        return RouteNavigationResult::create($this->pregMatch($path, $regexSearchMatches),
             $this->handlerFactories[$methodName] ? $this->handlerFactories[$methodName]->create($regexSearchMatches) : null);
     }
 
     protected function pregMatch(RoutePath $path, &$regexSearchMatches): bool
     {
-        return preg_match($this->path, $path->getValue(), $regexSearchMatches) === 1;
+        return preg_match($this->path->getValue(), $path->getValue(), $regexSearchMatches) === 1;
     }
 }
