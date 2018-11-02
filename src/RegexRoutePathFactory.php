@@ -4,13 +4,14 @@ namespace Featherbits\HttpRequestRouting;
 
 use RuntimeException;
 
-class RegexRoutePathFactoryFromTemplate
+class RegexRoutePathFactory
 {
     protected $parameterTypeRegexPatterns = [
-        '' => '[\w\-]+'
+        '' => '[\w\-]+',
+        'int' => '[0-9]+'
     ];
 
-    function create(string $routePathTemplate, ?array $scopedParameterTypeRegexPatterns): RoutePath
+    function create(string $routePathTemplate, ?array $scopedParameterTypeRegexPatterns = null): RoutePath
     {
         $path = rtrim($routePathTemplate, '/');
         $path = str_replace('/', '\/', $path);
@@ -21,9 +22,9 @@ class RegexRoutePathFactoryFromTemplate
 
         if ($matchCount > 0)
         {
-            foreach ($matches[1] as $templateIndex => $parameterInfo)
+            foreach ($matches[1] as $templateIndex => $template)
             {
-                $segments = explode(':', $parameterInfo);
+                $segments = explode(':', $template);
 
                 $parameterName = $segments[0];
                 $parameterTypeName = $segments[1] ?? '';
@@ -40,7 +41,7 @@ class RegexRoutePathFactoryFromTemplate
         // form final regex pattern for route path with optional trailing slash
         $path = "/^$path\/*$/";
 
-        return new RoutePath($path);
+        return RoutePath::create($path);
     }
 
     protected function getTypeRegexPattern(string $parameterTypeName, ?array $scopedParameterTypeRegexPatterns): string
