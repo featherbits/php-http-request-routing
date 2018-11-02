@@ -6,6 +6,7 @@ use Featherbits\HttpRequestRouting\{
     RoutePath,
     RegexRoute,
     RequestMethod,
+    RegexSearchResultSetter,
     RouteRequestMethodHandler,
     RequestMethodHandlerFactory
 };
@@ -51,5 +52,35 @@ class RegexPathRoutingTest extends TestCase
         $obtainedHandler->execute();
 
         $this->assertTrue($factory->handler->executed, 'Handler was not executed');
-    } 
+    }
+
+    function testRegexSearchResultsAreSet()
+    {
+        $method = RequestMethod::create(RequestMethod::GET);
+        $regexPath = RoutePath::create('/^\/some\/path$/');
+        $requestPath = RoutePath::create('/some/path');
+        $factory = new class implements RequestMethodHandlerFactory
+        {
+            function create(): RouteRequestMethodHandler
+            {
+                return new class implements RouteRequestMethodHandler, RegexSearchResultSetter
+                {
+                    public $matches;
+
+                    function setRegexSearchMatches(array $matches): void
+                    {
+                        $this->matches = $matches;
+                    }
+
+                    function execute(): void {}
+                };
+            }
+        };
+
+        $route = new RegexRoute($regexPath, $method, $factory);
+        $matches = $route->navigate($requestPath, $method)->getHandler()->matches;
+
+        $this->assertTrue(is_array($matches), 'Regex search result was not set');
+        $this->assertSame('/some/path', $matches[0] ?? null, 'Regex search result did not contain matched path');
+    }
 }
